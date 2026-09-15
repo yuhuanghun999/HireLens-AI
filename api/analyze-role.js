@@ -31,94 +31,62 @@ export default async function handler(req, res) {
     });
   }
 
-  /*
-   * Determine output-language instruction.
-   *
-   * Important:
-   * If the user selects:
-   * Input = Auto Detect
-   * Output = Same as Input
-   *
-   * We ask the model to detect the dominant input language
-   * instead of incorrectly forcing Chinese or English.
-   */
-
-  let outputInstruction = "";
+  let outputInstruction;
 
   if (outputLanguage === "zh") {
     outputInstruction = `
-Write ALL user-facing textual fields in Simplified Chinese.
-Do not output English explanations.
+ALL textual output must be written in Simplified Chinese.
 `;
   } else if (outputLanguage === "en") {
     outputInstruction = `
-Write ALL user-facing textual fields in English.
-Do not output Chinese explanations.
+ALL textual output must be written in English.
 `;
   } else {
     outputInstruction = `
-Detect the dominant language of the job description.
-
-If the job description is primarily Chinese,
-write ALL user-facing textual fields in Simplified Chinese.
-
-If the job description is primarily English,
-write ALL user-facing textual fields in English.
-
-If the input is mixed Chinese and English,
-use the dominant language of the input unless the user explicitly requested another output language.
+Automatically detect the dominant language of the job description.
+If Chinese, output Simplified Chinese.
+If English, output English.
 `;
   }
 
   const inputInstruction =
     inputLanguage === "zh"
-      ? "The user indicates that the input is primarily Chinese."
+      ? "The job description is primarily Chinese."
       : inputLanguage === "en"
-        ? "The user indicates that the input is primarily English."
-        : "The input language is not fixed. Automatically understand whether it is Chinese, English, or mixed-language.";
+        ? "The job description is primarily English."
+        : "The job description may be Chinese, English, or mixed.";
 
   const prompt = `
-You are an evidence-based recruitment analysis assistant.
-
-Your task is to analyze a job description and convert it into a structured role profile.
+Analyze the following job description.
 
 ${inputInstruction}
 
 ${outputInstruction}
 
-IMPORTANT RULES:
+You are an evidence-based recruitment analysis assistant.
 
-1. Understand the meaning of the job description regardless of language.
+Use ONLY information supported by the job description.
 
-2. Use ONLY information supported by the job description.
+Do not invent requirements.
 
-3. Do not invent responsibilities, requirements, skills, or qualifications.
+Do not infer:
+- age
+- gender
+- ethnicity
+- religion
+- disability
+- health status
+- sexual orientation
+- family status
+- other protected characteristics
 
-4. Do not infer protected characteristics.
+Do not make hiring recommendations.
 
-5. Do not evaluate:
-   - gender
-   - age
-   - ethnicity
-   - religion
-   - disability
-   - health status
-   - sexual orientation
-   - family status
-   - other protected characteristics
+If information is missing, explicitly identify insufficient evidence.
 
-6. Do not make a hiring recommendation.
+Return JSON only.
 
-7. If the job description does not provide enough information for a field,
-   clearly indicate insufficient evidence instead of inventing information.
-
-8. Competency weights must be whole-number percentages.
-
-9. Competency weights should add up to exactly 100.
-
-10. Return valid JSON only.
-
-Use exactly this JSON structure:
+The response MUST follow this exact structure:
 
 {
   "roleTitle": "",
@@ -137,13 +105,15 @@ Use exactly this JSON structure:
   "insufficientEvidenceAreas": []
 }
 
+Competency weights must be whole-number percentages
+and must add up to exactly 100.
+
 JOB DESCRIPTION:
 
 ${jd}
 `;
 
   try {
-
     const response = await fetch(
       "https://api.deepseek.com/chat/completions",
       {
@@ -155,24 +125,22 @@ ${jd}
         },
 
         body: JSON.stringify({
-          model: "deepseek-flash",
+          model: "deepseek-v4-flash",
 
           messages: [
             {
               role: "system",
               content: `
-You are a professional evidence-based recruitment analysis assistant.
+You are an evidence-based recruitment analysis assistant.
 
-Always return valid JSON.
+Return JSON only.
+
+The user expects a valid JSON object matching
+the schema provided in the user prompt.
 
 Never make unsupported claims.
-
-Never make hiring or rejection decisions.
-
-Follow the requested output language exactly.
 `
             },
-
             {
               role: "user",
               content: prompt
@@ -185,40 +153,62 @@ Follow the requested output language exactly.
 
           stream: false,
 
-          max_tokens: 2400
+          max_tokens: 4000
         })
       }
     );
 
     const data = await response.json();
 
-    if (!response.ok) {
+    console.log(
+      "DeepSeek response:",
+      JSON.stringify(data)
+    );
 
+    if (!response.ok) {
       return res.status(response.status).json({
         error:
           data?.error?.message ||
-          "DeepSeek request failed."
+          "DeepSeek request failed.",
+        deepseek: data
       });
+    }
 
+    const choice = data?.choices?.[0];
+
+    if (!choice) {
+      return res.status(500).json({
+        error: "DeepSeek returned no choices.",
+        deepseek: data
+      });
     }
 
     const content =
-      data?.choices?.[0]?.message?.content;
+      choice?.message?.content;
+
+    /*
+     * DeepSeek JSON mode can occasionally return
+     * an empty content field.
+     *
+     * We return the actual API information instead
+     * of hiding the problem behind "empty response".
+     */
 
     if (!content) {
-
       return res.status(500).json({
-        error: "DeepSeek returned an empty response."
+        error: "DeepSeek returned empty content.",
+        finishReason:
+          choice?.finish_reason || null,
+        reasoningContent:
+          choice?.message?.reasoning_content || null,
+        deepseek: data
       });
-
     }
 
     let result;
 
     try {
-
       result = JSON.parse(content);
-
     } catch (parseError) {
 
       console.error(
@@ -227,8 +217,8 @@ Follow the requested output language exactly.
       );
 
       return res.status(500).json({
-        error:
-          "The AI returned invalid JSON."
+        error: "DeepSeek returned invalid JSON.",
+        raw: content
       });
     }
 
@@ -242,10 +232,8 @@ Follow the requested output language exactly.
     );
 
     return res.status(500).json({
-      error:
-        "Unable to analyze the role.",
-      detail:
-        error.message
+      error: "Unable to analyze the role.",
+      detail: error.message
     });
   }
 }
