@@ -11,86 +11,48 @@ export default async function handler(req, res) {
     const {
       jobDescription,
       language = "en"
-    } = req.body;
+    } = req.body || {};
 
-
-    if (
-      !jobDescription ||
-      !jobDescription.trim()
-    ) {
-
+    if (!jobDescription || !jobDescription.trim()) {
       return res.status(400).json({
-        error: "Job description is required"
+        error: "Job description is required."
       });
-
     }
 
+    if (jobDescription.length > 20000) {
+      return res.status(400).json({
+        error: "Job description is too long."
+      });
+    }
 
     const outputLanguage =
       language === "zh"
         ? "Simplified Chinese"
         : "English";
 
-
-    const response = await fetch(
-      "https://api.deepseek.com/chat/completions",
-      {
-
-        method: "POST",
-
-        headers: {
-
-          "Content-Type":
-            "application/json",
-
-          "Authorization":
-            `Bearer ${process.env.DEEPSEEK_API_KEY}`
-
-        },
-
-        body: JSON.stringify({
-
-          model: "deepseek-flash",
-
-          messages: [
-
-            {
-
-              role: "system",
-
-              content: `
-
+    const systemPrompt = `
 You are HireLens AI, an evidence-based talent assessment assistant.
 
 Your task is to analyze a job description and create a structured Job Intelligence profile.
 
-The user's requested output language is:
-
+Output language:
 ${outputLanguage}
 
 IMPORTANT RULES:
 
-1. Do not invent information that is not supported by the job description.
+1. Use only information supported by the job description.
+2. Do not invent requirements.
+3. Separate explicit requirements from reasonable interpretations.
+4. Identify practical competencies for the role.
+5. Competency weights must add up approximately to 100.
+6. Do not make hiring, rejection, or employment decisions.
+7. Never infer negative conclusions from missing information.
+8. Missing information must be described as "Insufficient Evidence" or the equivalent in the requested language.
+9. Ignore protected characteristics such as gender, age, ethnicity, religion, disability or other sensitive personal characteristics.
+10. Keep the output practical for HR professionals.
+11. You MUST return valid JSON only.
 
-2. Separate explicit requirements from reasonable interpretations.
-
-3. Identify the most important competencies for the role.
-
-4. Do not make hiring, rejection, or employment decisions.
-
-5. Never infer negative conclusions from missing information.
-
-6. If evidence is insufficient, use "Insufficient Evidence" in English or "证据不足" in Chinese.
-
-7. Ignore unnecessary personal characteristics such as gender, age, ethnicity, religion, or other protected characteristics.
-
-8. Competency weights should add up approximately to 100.
-
-9. Keep the analysis practical for an HR professional.
-
-10. Return valid JSON only.
-
-Return exactly this structure:
+Return JSON using exactly this structure:
 
 {
   "roleTitle": "",
@@ -108,91 +70,82 @@ Return exactly this structure:
   "evidenceSignals": [],
   "insufficientEvidenceAreas": []
 }
+`;
 
-All text values must be written in ${outputLanguage}.
+    const response = await fetch(
+      "https://api.deepseek.com/chat/completions",
+      {
+        method: "POST",
 
-Job Description:
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":
+            `Bearer ${process.env.DEEPSEEK_API_KEY}`
+        },
 
-${jobDescription}
+        body: JSON.stringify({
 
-              `
+          model: "deepseek-flash",
 
-            },
-
+          messages: [
             {
-
+              role: "system",
+              content: systemPrompt
+            },
+            {
               role: "user",
-
               content:
-                "Analyze this job description according to the rules above."
+                `Analyze the following job description and return JSON only:
 
+${jobDescription}`
             }
-
           ],
 
           response_format: {
             type: "json_object"
           },
 
+          max_tokens: 5000,
+
           stream: false
 
         })
-
       }
     );
-
 
     if (!response.ok) {
 
       const errorText =
         await response.text();
 
-      return res.status(
-        response.status
-      ).json({
-
-        error:
-          errorText
-
+      return res.status(response.status).json({
+        error: errorText
       });
 
     }
-
 
     const data =
       await response.json();
 
-
     const result =
       data.choices?.[0]?.message?.content;
-
 
     if (!result) {
 
       return res.status(500).json({
-
-        error:
-          "No result returned from DeepSeek."
-
+        error: "No result returned from DeepSeek."
       });
 
     }
 
-
     return res.status(200).json({
-
-      result: result
-
+      result
     });
-
 
   } catch (error) {
 
     return res.status(500).json({
-
-      error:
-        error.message
-
+      error: error.message
     });
 
   }
