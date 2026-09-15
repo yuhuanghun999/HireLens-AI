@@ -15,29 +15,34 @@ export default async function handler(req, res) {
     }
 
     const response = await fetch(
-      "https://api.openai.com/v1/responses",
+      "https://api.deepseek.com/chat/completions",
       {
         method: "POST",
+
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+          "Authorization": `Bearer ${process.env.DEEPSEEK_API_KEY}`
         },
+
         body: JSON.stringify({
-          model: "gpt-5.6-luna",
-          input: `
+          model: "deepseek-flash",
+
+          messages: [
+            {
+              role: "system",
+              content: `
 You are HireLens AI, an evidence-based talent assessment assistant.
 
 Analyze the following job description and create a structured Job Intelligence profile.
 
 IMPORTANT RULES:
+
 1. Do not invent information that is not supported by the job description.
 2. Separate explicit requirements from reasonable interpretations.
 3. Identify the most important competencies.
 4. Do not make hiring decisions.
-5. Return JSON only.
-
-Job Description:
-${jobDescription}
+5. If evidence is insufficient, say "Insufficient Evidence".
+6. Return valid JSON only.
 
 Return this JSON structure:
 
@@ -57,7 +62,22 @@ Return this JSON structure:
   "evidenceSignals": [],
   "insufficientEvidenceAreas": []
 }
-          `
+              `
+            },
+
+            {
+              role: "user",
+              content: `Job Description:
+
+${jobDescription}`
+            }
+          ],
+
+          response_format: {
+            type: "json_object"
+          },
+
+          stream: false
         })
       }
     );
@@ -72,13 +92,24 @@ Return this JSON structure:
 
     const data = await response.json();
 
+    const result =
+      data.choices?.[0]?.message?.content;
+
+    if (!result) {
+      return res.status(500).json({
+        error: "No result returned from DeepSeek."
+      });
+    }
+
     return res.status(200).json({
-      result: data.output_text
+      result: result
     });
 
   } catch (error) {
+
     return res.status(500).json({
       error: error.message
     });
+
   }
 }
