@@ -1,1974 +1,1442 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HireLens AI — Evidence-Based Talent Assessment</title>
-
-  <style>
-    :root {
-      --bg: #f7f9fc;
-      --surface: #ffffff;
-      --surface-soft: #f1f5fb;
-      --text: #172033;
-      --muted: #667085;
-      --line: #e5eaf1;
-      --blue: #315efb;
-      --blue-dark: #2448c8;
-      --blue-soft: #edf2ff;
-      --green: #159570;
-      --green-soft: #eaf8f3;
-      --amber: #b7791f;
-      --amber-soft: #fff8e8;
-      --shadow: 0 20px 60px rgba(31, 45, 75, 0.08);
-      --shadow-small: 0 8px 30px rgba(31, 45, 75, 0.06);
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      margin: 0;
-      background:
-        radial-gradient(circle at 80% 0%, rgba(49,94,251,0.07), transparent 30%),
-        var(--bg);
-      color: var(--text);
-      font-family:
-        Inter,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        "PingFang SC",
-        "Microsoft YaHei",
-        Arial,
-        sans-serif;
-    }
-
-    button,
-    input,
-    textarea {
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    /* ================= NAV ================= */
-
-    nav {
-      height: 76px;
-      padding: 0 6%;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(255,255,255,0.82);
-      backdrop-filter: blur(18px);
-      border-bottom: 1px solid rgba(229,234,241,0.8);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      cursor: pointer;
-    }
-
-    .brand-mark {
-      width: 36px;
-      height: 36px;
-      border-radius: 11px;
-      background: linear-gradient(135deg, #315efb, #6281ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 800;
-      font-size: 16px;
-      box-shadow: 0 8px 20px rgba(49,94,251,0.22);
-    }
-
-    .brand-name {
-      font-size: 18px;
-      font-weight: 750;
-      letter-spacing: -0.4px;
-    }
-
-    .brand-name span {
-      color: var(--blue);
-    }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .nav-btn {
-      background: transparent;
-      border: 0;
-      color: #596579;
-      padding: 9px 13px;
-      border-radius: 9px;
-      font-size: 14px;
-      transition: 0.2s;
-    }
-
-    .nav-btn:hover {
-      background: var(--blue-soft);
-      color: var(--blue);
-    }
-
-    .lang-btn {
-      border: 1px solid var(--line);
-      background: white;
-      color: var(--blue);
-      margin-left: 8px;
-    }
-
-    .launch-btn {
-      background: var(--blue);
-      color: white;
-      border: 0;
-      padding: 10px 16px;
-      border-radius: 9px;
-      margin-left: 5px;
-      font-size: 14px;
-      font-weight: 600;
-      box-shadow: 0 7px 18px rgba(49,94,251,0.18);
-      transition: 0.2s;
-    }
-
-    .launch-btn:hover {
-      background: var(--blue-dark);
-      transform: translateY(-1px);
-    }
-
-    /* ================= PAGE ================= */
-
-    .page {
-      display: none;
-      animation: fadeIn 0.35s ease;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(6px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .container {
-      max-width: 1180px;
-      margin: auto;
-      padding: 0 26px;
-    }
-
-    /* ================= HERO ================= */
-
-    .hero {
-      padding: 90px 0 72px;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 0.92fr;
-      gap: 70px;
-      align-items: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 11px;
-      background: var(--blue-soft);
-      border: 1px solid #dce5ff;
-      color: var(--blue);
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
-
-    .eyebrow-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--blue);
-      border-radius: 50%;
-    }
-
-    .hero h1 {
-      margin: 22px 0 18px;
-      font-size: clamp(44px, 5.2vw, 70px);
-      line-height: 1.02;
-      letter-spacing: -3.2px;
-      font-weight: 780;
-    }
-
-    .hero h1 span {
-      color: var(--blue);
-    }
-
-    .hero-lead {
-      font-size: 20px;
-      line-height: 1.65;
-      color: var(--muted);
-      max-width: 610px;
-      margin: 0;
-    }
-
-    .hero-copy {
-      font-size: 14px;
-      line-height: 1.8;
-      color: #8791a3;
-      max-width: 570px;
-      margin-top: 15px;
-    }
-
-    .hero-actions {
-      margin-top: 28px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .primary {
-      border: 0;
-      background: var(--blue);
-      color: white;
-      padding: 13px 20px;
-      border-radius: 10px;
-      font-weight: 650;
-      box-shadow: 0 9px 22px rgba(49,94,251,0.18);
-      transition: 0.2s;
-    }
-
-    .primary:hover {
-      background: var(--blue-dark);
-      transform: translateY(-1px);
-    }
-
-    .secondary {
-      border: 1px solid var(--line);
-      background: white;
-      color: #475467;
-      padding: 13px 20px;
-      border-radius: 10px;
-      font-weight: 600;
-      transition: 0.2s;
-    }
-
-    .secondary:hover {
-      border-color: #cbd5e1;
-      background: #fafbfc;
-    }
-
-    /* ================= ASSESSMENT CARD ================= */
-
-    .assessment-card {
-      background: rgba(255,255,255,0.93);
-      border: 1px solid rgba(224,230,239,0.9);
-      border-radius: 22px;
-      padding: 25px;
-      box-shadow: var(--shadow);
-      position: relative;
-    }
-
-    .assessment-card::before {
-      content: "";
-      position: absolute;
-      width: 180px;
-      height: 180px;
-      background: rgba(49,94,251,0.07);
-      border-radius: 50%;
-      right: -70px;
-      top: -80px;
-      filter: blur(3px);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      position: relative;
-    }
-
-    .mini-label {
-      color: #8a94a6;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1.1px;
-      text-transform: uppercase;
-    }
-
-    .card-top h3 {
-      margin: 7px 0 0;
-      font-size: 17px;
-    }
-
-    .status-pill {
-      background: var(--green-soft);
-      color: var(--green);
-      padding: 6px 9px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .score-row {
-      display: flex;
-      align-items: center;
-      gap: 19px;
-      padding: 27px 0 23px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .score-circle {
-      width: 88px;
-      height: 88px;
-      border-radius: 50%;
-      border: 7px solid #e7edff;
-      border-top-color: var(--blue);
-      border-right-color: var(--blue);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .score-circle strong {
-      font-size: 28px;
-      letter-spacing: -1px;
-    }
-
-    .score-info h4 {
-      margin: 0 0 5px;
-      font-size: 16px;
-    }
-
-    .score-info p {
-      margin: 0;
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .competencies {
-      padding-top: 20px;
-    }
-
-    .comp-row {
-      margin-bottom: 15px;
-    }
-
-    .comp-head {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      margin-bottom: 7px;
-    }
-
-    .comp-head span:last-child {
-      color: #445065;
-      font-weight: 700;
-    }
-
-    .bar {
-      height: 6px;
-      background: #edf0f5;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #315efb, #718cff);
-      border-radius: 999px;
-    }
-
-    .evidence {
-      margin-top: 20px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .evidence-box {
-      padding: 13px;
-      border-radius: 11px;
-      font-size: 11px;
-      line-height: 1.55;
-    }
-
-    .evidence-good {
-      background: var(--green-soft);
-      color: #17694f;
-    }
-
-    .evidence-warn {
-      background: var(--amber-soft);
-      color: #8b621d;
-    }
-
-    .evidence-title {
-      font-weight: 750;
-      margin-bottom: 5px;
-    }
-
-    /* ================= VALUE SECTION ================= */
-
-    .section {
-      padding: 78px 0;
-    }
-
-    .section-header {
-      max-width: 650px;
-      margin-bottom: 34px;
-    }
-
-    .section-kicker {
-      color: var(--blue);
-      font-size: 12px;
-      font-weight: 750;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .section-header h2 {
-      font-size: 35px;
-      letter-spacing: -1.3px;
-      margin: 9px 0 12px;
-    }
-
-    .section-header p {
-      color: var(--muted);
-      line-height: 1.7;
-      margin: 0;
-    }
-
-    .value-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-    }
-
-    .value-card {
-      background: white;
-      border: 1px solid var(--line);
-      padding: 23px;
-      border-radius: 15px;
-      transition: 0.2s;
-    }
-
-    .value-card:hover {
-      transform: translateY(-3px);
-      box-shadow: var(--shadow-small);
-    }
-
-    .value-number {
-      color: var(--blue);
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .value-card h3 {
-      font-size: 16px;
-      margin: 18px 0 8px;
-    }
-
-    .value-card p {
-      color: var(--muted);
-      font-size: 13px;
-      line-height: 1.65;
-      margin: 0;
-    }
-
-    /* ================= WORKFLOW ================= */
-
-    .workflow-section {
-      background: #101828;
-      color: white;
-      padding: 82px 0;
-      margin-top: 20px;
-    }
-
-    .workflow-header {
-      max-width: 650px;
-      margin-bottom: 40px;
-    }
-
-    .workflow-header .section-kicker {
-      color: #8da6ff;
-    }
-
-    .workflow-header h2 {
-      font-size: 34px;
-      letter-spacing: -1.2px;
-      margin: 9px 0 12px;
-    }
-
-    .workflow-header p {
-      color: #98a2b3;
-      line-height: 1.7;
-    }
-
-    .workflow {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 10px;
-    }
-
-    .workflow-item {
-      padding: 20px 15px;
-      border: 1px solid rgba(255,255,255,0.09);
-      background: rgba(255,255,255,0.035);
-      border-radius: 13px;
-      min-height: 125px;
-    }
-
-    .workflow-item .number {
-      color: #8da6ff;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .workflow-item h3 {
-      font-size: 14px;
-      margin: 19px 0 6px;
-    }
-
-    .workflow-item p {
-      font-size: 11px;
-      color: #98a2b3;
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    /* ================= METHOD ================= */
-
-    .method-page {
-      padding: 85px 0;
-    }
-
-    .method-hero {
-      max-width: 760px;
-      margin-bottom: 50px;
-    }
-
-    .method-hero h1 {
-      font-size: 54px;
-      letter-spacing: -2.5px;
-      margin: 12px 0;
-    }
-
-    .method-hero p {
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.7;
-    }
-
-    .principle {
-      margin: 28px 0 55px;
-      padding: 22px 25px;
-      border-left: 3px solid var(--blue);
-      background: white;
-      border-radius: 0 12px 12px 0;
-      box-shadow: var(--shadow-small);
-    }
-
-    .principle strong {
-      display: block;
-      font-size: 20px;
-      margin-bottom: 7px;
-    }
-
-    .principle span {
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .method-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 17px;
-    }
-
-    .method-card {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 17px;
-      padding: 27px;
-      display: grid;
-      grid-template-columns: 48px 1fr;
-      gap: 18px;
-      transition: 0.2s;
-    }
-
-    .method-card:hover {
-      box-shadow: var(--shadow-small);
-      transform: translateY(-2px);
-    }
-
-    .method-num {
-      width: 42px;
-      height: 42px;
-      border-radius: 12px;
-      background: var(--blue-soft);
-      color: var(--blue);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-    }
-
-    .method-card h3 {
-      margin: 0 0 8px;
-      font-size: 17px;
-    }
-
-    .method-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 13px;
-    }
-
-    /* ================= DEMO ================= */
-
-    .demo-page {
-      padding: 60px 0 90px;
-    }
-
-    .demo-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 28px;
-      gap: 30px;
-    }
-
-    .demo-header h1 {
-      font-size: 43px;
-      letter-spacing: -1.8px;
-      margin: 9px 0;
-    }
-
-    .demo-header p {
-      color: var(--muted);
-      line-height: 1.6;
-      margin: 0;
-      max-width: 600px;
-    }
-
-    .demo-badge {
-      white-space: nowrap;
-      background: #fff8e8;
-      color: #96651b;
-      padding: 8px 11px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .workspace {
-      display: grid;
-      grid-template-columns: 0.8fr 1.2fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .input-panel,
-    .result-panel {
-      background: white;
-      border: 1px solid var(--line);
-      border-radius: 17px;
-      padding: 23px;
-    }
-
-    .step-label {
-      font-size: 11px;
-      color: var(--blue);
-      font-weight: 800;
-      letter-spacing: 0.8px;
-      text-transform: uppercase;
-    }
-
-    .panel-title {
-      font-size: 19px;
-      margin: 7px 0;
-    }
-
-    .panel-description {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.6;
-      margin: 0 0 17px;
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 250px;
-      border: 1px solid #dce2eb;
-      border-radius: 11px;
-      resize: vertical;
-      padding: 14px;
-      outline: none;
-      color: var(--text);
-      background: #fbfcfe;
-      line-height: 1.6;
-      font-size: 13px;
-    }
-
-    textarea:focus {
-      border-color: #91a8ff;
-      box-shadow: 0 0 0 3px rgba(49,94,251,0.07);
-      background: white;
-    }
-
-    .input-actions {
-      margin-top: 12px;
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    .result-empty {
-      min-height: 250px;
-      border: 1px dashed #d7dee9;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 30px;
-      color: #98a2b3;
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    .role-result {
-      display: none;
-    }
-
-    .role-result.active {
-      display: block;
-    }
-
-    .result-heading {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-
-    .result-heading h3 {
-      margin: 5px 0 3px;
-      font-size: 20px;
-    }
-
-    .result-heading p {
-      color: var(--muted);
-      font-size: 12px;
-      margin: 0;
-    }
-
-    .role-tag {
-      padding: 7px 9px;
-      border-radius: 8px;
-      background: var(--blue-soft);
-      color: var(--blue);
-      font-size: 10px;
-      font-weight: 750;
-    }
-
-    .result-block {
-      margin-bottom: 19px;
-    }
-
-    .result-block h4 {
-      font-size: 11px;
-      color: #667085;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin: 0 0 9px;
-    }
-
-    .tag-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-    }
-
-    .tag {
-      background: #f3f5f8;
-      border: 1px solid #e7ebf0;
-      padding: 7px 9px;
-      border-radius: 7px;
-      font-size: 11px;
-      color: #475467;
-    }
-
-    .demo-warning {
-      margin-top: 18px;
-      background: #fff8e8;
-      border: 1px solid #f5dfae;
-      color: #855e1d;
-      padding: 13px 15px;
-      border-radius: 10px;
-      font-size: 11px;
-      line-height: 1.6;
-    }
-
-    /* ================= FOOTER ================= */
-
-    footer {
-      padding: 35px 0;
-      border-top: 1px solid var(--line);
-      background: white;
-    }
-
-    .footer-inner {
-      max-width: 1180px;
-      padding: 0 26px;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      gap: 20px;
-      color: #98a2b3;
-      font-size: 12px;
-    }
-
-    /* ================= RESPONSIVE ================= */
-
-    @media (max-width: 950px) {
-
-      .hero-grid {
-        grid-template-columns: 1fr;
-        gap: 45px;
-      }
-
-      .value-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .workflow {
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      .workspace {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 700px) {
-
-      nav {
-        padding: 0 15px;
-      }
-
-      .nav-btn {
-        display: none;
-      }
-
-      .lang-btn {
-        margin-left: 0;
-      }
-
-      .launch-btn {
-        padding: 9px 12px;
-      }
-
-      .hero {
-        padding-top: 55px;
-      }
-
-      .hero h1 {
-        font-size: 45px;
-        letter-spacing: -2px;
-      }
-
-      .hero-lead {
-        font-size: 17px;
-      }
-
-      .value-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .workflow {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .method-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .method-hero h1 {
-        font-size: 42px;
-      }
-
-      .demo-header {
-        display: block;
-      }
-
-      .demo-badge {
-        display: inline-block;
-        margin-top: 15px;
-      }
-
-      .evidence {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-inner {
-        display: block;
-      }
-    }
-
-    @media (max-width: 460px) {
-
-      .workflow {
-        grid-template-columns: 1fr;
-      }
-
-      .score-row {
-        align-items: flex-start;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>HireLens AI — AI-Powered Talent Assessment</title>
+
+<style>
+:root{
+  --bg:#f7f9fc;
+  --surface:#ffffff;
+  --surface2:#f1f4f9;
+  --text:#172033;
+  --muted:#667085;
+  --line:#e5e9f0;
+  --blue:#315efb;
+  --blue2:#2449d8;
+  --green:#16a36a;
+  --amber:#b7791f;
+  --shadow:0 20px 60px rgba(23,32,51,.08);
+}
+
+*{box-sizing:border-box}
+
+html{
+  scroll-behavior:smooth;
+}
+
+body{
+  margin:0;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+button,
+textarea{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+}
+
+.nav{
+  position:sticky;
+  top:0;
+  z-index:20;
+  height:72px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 6%;
+  background:rgba(247,249,252,.88);
+  backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(229,233,240,.8);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:800;
+  letter-spacing:-.4px;
+}
+
+.brand-mark{
+  width:34px;
+  height:34px;
+  border-radius:10px;
+  background:var(--blue);
+  display:grid;
+  place-items:center;
+  color:white;
+  font-size:14px;
+  box-shadow:0 8px 20px rgba(49,94,251,.25);
+}
+
+.nav-links{
+  display:flex;
+  align-items:center;
+  gap:28px;
+}
+
+.nav-links button{
+  border:0;
+  background:none;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.nav-links button:hover{
+  color:var(--text);
+}
+
+.nav-actions{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.lang-btn,
+.launch-btn{
+  border:1px solid var(--line);
+  background:white;
+  padding:9px 14px;
+  border-radius:10px;
+  font-size:13px;
+}
+
+.launch-btn{
+  background:var(--text);
+  color:white;
+  border-color:var(--text);
+}
+
+.page{
+  display:none;
+}
+
+.page.active{
+  display:block;
+}
+
+.container{
+  width:min(1160px,90%);
+  margin:auto;
+}
+
+.hero{
+  padding:90px 0 80px;
+}
+
+.hero-grid{
+  display:grid;
+  grid-template-columns:1.1fr .9fr;
+  gap:70px;
+  align-items:center;
+}
+
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  color:var(--blue);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:1.3px;
+  text-transform:uppercase;
+  margin-bottom:18px;
+}
+
+.eyebrow span{
+  width:7px;
+  height:7px;
+  background:var(--blue);
+  border-radius:50%;
+}
+
+h1{
+  font-size:clamp(46px,6vw,78px);
+  line-height:.98;
+  letter-spacing:-4px;
+  margin:0 0 26px;
+}
+
+.hero-copy{
+  max-width:610px;
+  color:var(--muted);
+  font-size:18px;
+  line-height:1.7;
+}
+
+.hero-actions{
+  display:flex;
+  gap:12px;
+  margin-top:32px;
+}
+
+.primary{
+  background:var(--blue);
+  color:white;
+  border:0;
+  padding:14px 20px;
+  border-radius:12px;
+  font-weight:700;
+  box-shadow:0 12px 28px rgba(49,94,251,.2);
+}
+
+.primary:hover{
+  background:var(--blue2);
+}
+
+.secondary{
+  background:white;
+  color:var(--text);
+  border:1px solid var(--line);
+  padding:14px 20px;
+  border-radius:12px;
+  font-weight:700;
+}
+
+.preview{
+  background:white;
+  border:1px solid var(--line);
+  border-radius:24px;
+  padding:26px;
+  box-shadow:var(--shadow);
+}
+
+.preview-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:25px;
+}
+
+.small{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.score{
+  display:flex;
+  align-items:end;
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.score-number{
+  font-size:58px;
+  font-weight:800;
+  letter-spacing:-3px;
+}
+
+.score-label{
+  color:var(--green);
+  font-size:14px;
+  font-weight:700;
+  margin-bottom:11px;
+}
+
+.bar-row{
+  margin:18px 0;
+}
+
+.bar-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-bottom:8px;
+}
+
+.bar{
+  height:7px;
+  border-radius:10px;
+  background:#edf0f5;
+  overflow:hidden;
+}
+
+.bar-fill{
+  height:100%;
+  background:var(--blue);
+  border-radius:10px;
+}
+
+.evidence{
+  margin-top:25px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.evidence-card{
+  padding:14px;
+  border-radius:13px;
+  background:var(--surface2);
+}
+
+.evidence-card strong{
+  display:block;
+  font-size:13px;
+  margin-bottom:4px;
+}
+
+.evidence-card span{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.section{
+  padding:90px 0;
+}
+
+.section-title{
+  max-width:650px;
+  margin-bottom:45px;
+}
+
+.section-title h2{
+  font-size:42px;
+  letter-spacing:-2px;
+  margin:0 0 15px;
+}
+
+.section-title p{
+  color:var(--muted);
+  line-height:1.7;
+  font-size:16px;
+}
+
+.value-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+
+.card{
+  background:white;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:25px;
+}
+
+.card-number{
+  color:var(--blue);
+  font-weight:800;
+  font-size:12px;
+  margin-bottom:45px;
+}
+
+.card h3{
+  margin:0 0 10px;
+  font-size:18px;
+}
+
+.card p{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.65;
+  margin:0;
+}
+
+.workflow{
+  background:#151b29;
+  color:white;
+  padding:90px 0;
+}
+
+.workflow .section-title p{
+  color:#aeb7c8;
+}
+
+.workflow-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:12px;
+}
+
+.workflow-item{
+  border-top:1px solid #394153;
+  padding-top:20px;
+}
+
+.workflow-item span{
+  color:#8490a6;
+  font-size:12px;
+}
+
+.workflow-item h3{
+  font-size:15px;
+  margin-top:35px;
+}
+
+.method-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+
+.method-card{
+  background:white;
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:25px;
+  min-height:210px;
+}
+
+.method-card .num{
+  color:var(--blue);
+  font-size:12px;
+  font-weight:800;
+}
+
+.method-card h3{
+  margin-top:40px;
+}
+
+.method-card p{
+  color:var(--muted);
+  line-height:1.7;
+  font-size:14px;
+}
+
+.principle{
+  margin-top:35px;
+  padding:25px;
+  border-left:3px solid var(--blue);
+  background:#eef3ff;
+  border-radius:0 14px 14px 0;
+}
+
+.principle strong{
+  display:block;
+  margin-bottom:6px;
+}
+
+.principle span{
+  color:var(--muted);
+  font-size:14px;
+}
+
+.demo{
+  padding:80px 0 100px;
+}
+
+.demo-grid{
+  display:grid;
+  grid-template-columns:.9fr 1.1fr;
+  gap:20px;
+}
+
+.panel{
+  background:white;
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:26px;
+  box-shadow:0 10px 35px rgba(23,32,51,.04);
+}
+
+.panel h2{
+  margin:0 0 8px;
+}
+
+.panel-sub{
+  color:var(--muted);
+  font-size:14px;
+  line-height:1.6;
+  margin-bottom:22px;
+}
+
+textarea{
+  width:100%;
+  min-height:370px;
+  resize:vertical;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:16px;
+  outline:none;
+  color:var(--text);
+  background:#fbfcfe;
+  line-height:1.6;
+}
+
+textarea:focus{
+  border-color:var(--blue);
+  box-shadow:0 0 0 3px rgba(49,94,251,.08);
+}
+
+.analyze-btn{
+  width:100%;
+  margin-top:12px;
+  padding:14px;
+  border:0;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-weight:800;
+}
+
+.analyze-btn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.result{
+  min-height:450px;
+}
+
+.empty{
+  height:100%;
+  min-height:400px;
+  display:grid;
+  place-items:center;
+  text-align:center;
+  color:var(--muted);
+  padding:50px;
+}
+
+.empty-icon{
+  width:55px;
+  height:55px;
+  margin:auto auto 15px;
+  border-radius:16px;
+  background:#eef3ff;
+  color:var(--blue);
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+
+.loading{
+  text-align:center;
+  padding:80px 20px;
+}
+
+.spinner{
+  width:35px;
+  height:35px;
+  border:3px solid #e5e9f0;
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:spin .8s linear infinite;
+  margin:0 auto 18px;
+}
+
+@keyframes spin{
+  to{transform:rotate(360deg)}
+}
+
+.role-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:start;
+  gap:15px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--line);
+}
+
+.role-header h2{
+  margin:0;
+  font-size:24px;
+}
+
+.badge{
+  background:#eef8f3;
+  color:var(--green);
+  padding:7px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  white-space:nowrap;
+}
+
+.result-section{
+  margin-top:25px;
+}
+
+.result-section h4{
+  margin:0 0 12px;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  color:#475467;
+}
+
+.result-section p,
+.result-section li{
+  color:#596579;
+  font-size:14px;
+  line-height:1.65;
+}
+
+.result-section ul{
+  margin:0;
+  padding-left:20px;
+}
+
+.competency{
+  padding:14px 0;
+  border-bottom:1px solid var(--line);
+}
+
+.competency:last-child{
+  border-bottom:0;
+}
+
+.comp-top{
+  display:flex;
+  justify-content:space-between;
+  font-size:13px;
+  margin-bottom:7px;
+}
+
+.weight{
+  color:var(--blue);
+  font-weight:800;
+}
+
+.warning{
+  margin-top:20px;
+  padding:15px 17px;
+  border-radius:13px;
+  background:#fff8eb;
+  border:1px solid #f4dfb6;
+  color:#805b1c;
+  font-size:12px;
+  line-height:1.6;
+}
+
+.error{
+  padding:20px;
+  border-radius:14px;
+  background:#fff1f1;
+  color:#a33a3a;
+  font-size:13px;
+  line-height:1.6;
+}
+
+footer{
+  padding:35px 0;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+}
+
+@media(max-width:900px){
+  .hero-grid,
+  .demo-grid{
+    grid-template-columns:1fr;
+  }
+
+  .value-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .workflow-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+
+  .method-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .nav-links{
+    display:none;
+  }
+}
+
+@media(max-width:600px){
+  .hero{
+    padding:60px 0;
+  }
+
+  h1{
+    font-size:48px;
+    letter-spacing:-2.5px;
+  }
+
+  .value-grid,
+  .workflow-grid,
+  .method-grid{
+    grid-template-columns:1fr;
+  }
+
+  .hero-actions{
+    flex-direction:column;
+  }
+
+  .nav{
+    padding:0 5%;
+  }
+
+  .launch-btn{
+    display:none;
+  }
+}
+</style>
 </head>
-
 
 <body>
 
-  <!-- ================= NAV ================= -->
+<nav class="nav">
 
-  <nav>
+  <div class="brand">
+    <div class="brand-mark">H</div>
+    HireLens AI
+  </div>
 
-    <div class="brand" onclick="showPage('home')">
-      <div class="brand-mark">H</div>
+  <div class="nav-links">
+    <button onclick="showPage('home')">Product</button>
+    <button onclick="showPage('methodology')">Methodology</button>
+    <button onclick="showPage('demo')">Demo</button>
+  </div>
 
-      <div class="brand-name">
-        Hire<span>Lens</span> AI
+  <div class="nav-actions">
+    <button class="lang-btn" onclick="toggleLanguage()">中 / EN</button>
+    <button class="launch-btn" onclick="showPage('demo')">Launch Demo</button>
+  </div>
+
+</nav>
+
+
+<!-- HOME -->
+
+<main id="home" class="page active">
+
+<section class="hero">
+<div class="container">
+
+<div class="hero-grid">
+
+<div>
+
+<div class="eyebrow">
+<span></span>
+Evidence-based talent assessment
+</div>
+
+<h1>Turn resumes<br>into evidence.</h1>
+
+<p class="hero-copy">
+HireLens AI helps recruiters transform job descriptions and candidate resumes into structured, evidence-based hiring insights — while keeping humans in control.
+</p>
+
+<div class="hero-actions">
+<button class="primary" onclick="showPage('demo')">
+Start Demo
+</button>
+
+<button class="secondary" onclick="showPage('methodology')">
+Project Methodology
+</button>
+</div>
+
+</div>
+
+
+<div class="preview">
+
+<div class="preview-top">
+<div>
+<strong>Candidate Assessment</strong>
+<div class="small">Evidence-based reference</div>
+</div>
+
+<div class="badge">Human Review</div>
+</div>
+
+<div class="score">
+<div class="score-number">82</div>
+<div class="score-label">Strong Fit</div>
+</div>
+
+<div class="bar-row">
+<div class="bar-label">
+<span>Communication</span>
+<strong>91</strong>
+</div>
+<div class="bar">
+<div class="bar-fill" style="width:91%"></div>
+</div>
+</div>
+
+<div class="bar-row">
+<div class="bar-label">
+<span>Problem Solving</span>
+<strong>84</strong>
+</div>
+<div class="bar">
+<div class="bar-fill" style="width:84%"></div>
+</div>
+</div>
+
+<div class="bar-row">
+<div class="bar-label">
+<span>Role Knowledge</span>
+<strong>73</strong>
+</div>
+<div class="bar">
+<div class="bar-fill" style="width:73%"></div>
+</div>
+</div>
+
+<div class="evidence">
+
+<div class="evidence-card">
+<strong>Evidence Found</strong>
+<span>3 competency signals</span>
+</div>
+
+<div class="evidence-card">
+<strong>Insufficient Evidence</strong>
+<span>2 areas require interview</span>
+</div>
+
+</div>
+
+</div>
+
+</div>
+</div>
+</section>
+
+
+<section class="section">
+
+<div class="container">
+
+<div class="section-title">
+<h2>Designed for better hiring decisions.</h2>
+<p>
+AI should help HR professionals understand evidence, not replace professional judgment.
+</p>
+</div>
+
+<div class="value-grid">
+
+<div class="card">
+<div class="card-number">01</div>
+<h3>Understand the Role</h3>
+<p>
+Convert a job description into responsibilities, requirements and competency signals.
+</p>
+</div>
+
+<div class="card">
+<div class="card-number">02</div>
+<h3>Read the Evidence</h3>
+<p>
+Identify what a candidate has actually demonstrated instead of relying on assumptions.
+</p>
+</div>
+
+<div class="card">
+<div class="card-number">03</div>
+<h3>Structure the Interview</h3>
+<p>
+Generate focused questions that investigate missing or uncertain evidence.
+</p>
+</div>
+
+<div class="card">
+<div class="card-number">04</div>
+<h3>Keep Humans in Control</h3>
+<p>
+AI provides structured reference points. Final hiring decisions remain with people.
+</p>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+<section class="workflow">
+
+<div class="container">
+
+<div class="section-title">
+<h2>From job description to human decision.</h2>
+<p>
+A transparent recruitment workflow designed around evidence.
+</p>
+</div>
+
+<div class="workflow-grid">
+
+<div class="workflow-item">
+<span>01</span>
+<h3>Define Job</h3>
+</div>
+
+<div class="workflow-item">
+<span>02</span>
+<h3>Map Competencies</h3>
+</div>
+
+<div class="workflow-item">
+<span>03</span>
+<h3>Screen Evidence</h3>
+</div>
+
+<div class="workflow-item">
+<span>04</span>
+<h3>Assess Talent</h3>
+</div>
+
+<div class="workflow-item">
+<span>05</span>
+<h3>Generate Interview</h3>
+</div>
+
+<div class="workflow-item">
+<span>06</span>
+<h3>Human Review</h3>
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+
+<!-- METHODOLOGY -->
+
+<main id="methodology" class="page">
+
+<section class="section">
+
+<div class="container">
+
+<div class="section-title">
+<div class="eyebrow">
+<span></span>
+Project Methodology
+</div>
+
+<h2>Evidence before judgment.</h2>
+
+<p>
+HireLens AI is designed around a simple principle: AI should organize evidence, reveal uncertainty and support structured evaluation — not make the hiring decision.
+</p>
+</div>
+
+
+<div class="method-grid">
+
+<div class="method-card">
+<div class="num">01</div>
+<h3>Job Intelligence</h3>
+<p>
+Analyze the job description to identify responsibilities, requirements and the capabilities the role actually demands.
+</p>
+</div>
+
+<div class="method-card">
+<div class="num">02</div>
+<h3>Competency Mapping</h3>
+<p>
+Translate job requirements into observable competency dimensions that can later be assessed consistently.
+</p>
+</div>
+
+<div class="method-card">
+<div class="num">03</div>
+<h3>Evidence-based Screening</h3>
+<p>
+Assess candidates through explicit evidence in the resume rather than assumptions based on personal characteristics.
+</p>
+</div>
+
+<div class="method-card">
+<div class="num">04</div>
+<h3>Structured Interview</h3>
+<p>
+Use targeted STAR-style questions to investigate important competencies and areas where evidence is incomplete.
+</p>
+</div>
+
+<div class="method-card">
+<div class="num">05</div>
+<h3>Human-in-the-loop</h3>
+<p>
+AI produces an analytical reference. HR professionals retain responsibility for interpretation and final decisions.
+</p>
+</div>
+
+<div class="method-card">
+<div class="num">06</div>
+<h3>Bias Mitigation</h3>
+<p>
+Ignore unnecessary personal information and avoid negative conclusions when the resume simply does not provide enough evidence.
+</p>
+</div>
+
+</div>
+
+
+<div class="principle">
+
+<strong>Core Principle — “No evidence, no claim.”</strong>
+
+<span>
+If the resume does not provide evidence for a competency, HireLens AI should return “Insufficient Evidence” rather than inventing or inferring a negative conclusion.
+</span>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+
+<!-- DEMO -->
+
+<main id="demo" class="page">
+
+<section class="demo">
+
+<div class="container">
+
+<div class="section-title">
+
+<div class="eyebrow">
+<span></span>
+Live AI Demo
+</div>
+
+<h2>Understand the role first.</h2>
+
+<p>
+Paste a job description and let HireLens AI transform it into a structured Job Intelligence profile.
+</p>
+
+</div>
+
+
+<div class="demo-grid">
+
+
+<div class="panel">
+
+<h2>01 — Define the Job</h2>
+
+<div class="panel-sub">
+Paste the job description below. HireLens AI will identify responsibilities, requirements and competency signals.
+</div>
+
+<textarea
+id="jobDescription"
+placeholder="Paste a job description here...
+
+Example:
+We are looking for an HR Intern to support recruitment, candidate screening, interview coordination and employee data management..."
+></textarea>
+
+<button
+id="analyzeBtn"
+class="analyze-btn"
+onclick="analyzeRole()"
+>
+Analyze Role
+</button>
+
+</div>
+
+
+<div class="panel result" id="resultPanel">
+
+<div class="empty">
+
+<div>
+
+<div class="empty-icon">AI</div>
+
+<strong>Your Job Intelligence will appear here.</strong>
+
+<p>
+Start by entering a job description on the left.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="warning">
+
+<strong>Human-in-the-loop:</strong>
+AI-generated analysis is provided for reference only. It does not make hiring, rejection or employment decisions. Final evaluation must be conducted by qualified human HR professionals.
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+<div class="container">
+
+HireLens AI · AI-Powered Talent Assessment Assistant
+
+</div>
+
+</footer>
+
+
+<script>
+
+function showPage(pageId){
+
+  document.querySelectorAll(".page").forEach(page=>{
+    page.classList.remove("active");
+  });
+
+  document.getElementById(pageId).classList.add("active");
+
+  window.scrollTo({
+    top:0,
+    behavior:"smooth"
+  });
+}
+
+
+function toggleLanguage(){
+
+  alert("Chinese interface is coming soon. / 中文界面即将上线。");
+
+}
+
+
+async function analyzeRole(){
+
+  const textarea =
+    document.getElementById("jobDescription");
+
+  const button =
+    document.getElementById("analyzeBtn");
+
+  const result =
+    document.getElementById("resultPanel");
+
+  const jobDescription =
+    textarea.value.trim();
+
+
+  if(!jobDescription){
+
+    result.innerHTML = `
+      <div class="error">
+        Please enter a job description first.
       </div>
-    </div>
+    `;
 
-    <div class="nav-right">
+    return;
+  }
 
-      <button class="nav-btn" onclick="showPage('home')" id="navHome">
-        Product
-      </button>
 
-      <button class="nav-btn" onclick="showPage('methodology')" id="navMethod">
-        Methodology
-      </button>
+  button.disabled = true;
 
-      <button class="nav-btn" onclick="showPage('demo')" id="navDemo">
-        Demo
-      </button>
+  button.textContent = "Analyzing...";
 
-      <button class="nav-btn lang-btn" onclick="toggleLanguage()" id="languageButton">
-        中
-      </button>
 
-      <button class="launch-btn" onclick="showPage('demo')" id="launchButton">
-        Launch Demo →
-      </button>
+  result.innerHTML = `
+    <div class="loading">
 
-    </div>
+      <div class="spinner"></div>
 
-  </nav>
+      <strong>Analyzing the role...</strong>
 
-
-  <!-- ================= HOME ================= -->
-
-  <section id="home" class="page active">
-
-    <div class="container">
-
-      <div class="hero">
-
-        <div class="hero-grid">
-
-          <div>
-
-            <div class="eyebrow">
-              <span class="eyebrow-dot"></span>
-              Evidence-based talent assessment
-            </div>
-
-            <h1>
-              Turn resumes into
-              <span>evidence.</span>
-            </h1>
-
-            <p class="hero-lead" id="heroLead">
-              Turn hiring decisions into insight with structured,
-              evidence-based AI assessment.
-            </p>
-
-            <p class="hero-copy" id="heroCopy">
-              HireLens AI helps recruiters understand job requirements,
-              evaluate candidate evidence, and generate structured
-              interview questions — while keeping humans in control.
-            </p>
-
-            <div class="hero-actions">
-
-              <button class="primary" onclick="showPage('demo')" id="heroPrimary">
-                Try HireLens →
-              </button>
-
-              <button class="secondary" onclick="showPage('methodology')" id="heroSecondary">
-                See How It Works
-              </button>
-
-            </div>
-
-          </div>
-
-
-          <!-- ASSESSMENT PREVIEW -->
-
-          <div class="assessment-card">
-
-            <div class="card-top">
-
-              <div>
-                <div class="mini-label">Candidate assessment</div>
-                <h3>Product Marketing Intern</h3>
-              </div>
-
-              <div class="status-pill">
-                Strong Fit
-              </div>
-
-            </div>
-
-
-            <div class="score-row">
-
-              <div class="score-circle">
-                <strong>82</strong>
-              </div>
-
-              <div class="score-info">
-                <h4>Overall Match</h4>
-                <p>Evidence-based competency assessment</p>
-              </div>
-
-            </div>
-
-
-            <div class="competencies">
-
-              <div class="comp-row">
-                <div class="comp-head">
-                  <span>Relevant Experience</span>
-                  <span>90</span>
-                </div>
-
-                <div class="bar">
-                  <div class="bar-fill" style="width:90%"></div>
-                </div>
-              </div>
-
-
-              <div class="comp-row">
-                <div class="comp-head">
-                  <span>Communication</span>
-                  <span>84</span>
-                </div>
-
-                <div class="bar">
-                  <div class="bar-fill" style="width:84%"></div>
-                </div>
-              </div>
-
-
-              <div class="comp-row">
-                <div class="comp-head">
-                  <span>Analytical Ability</span>
-                  <span>78</span>
-                </div>
-
-                <div class="bar">
-                  <div class="bar-fill" style="width:78%"></div>
-                </div>
-              </div>
-
-
-              <div class="comp-row">
-                <div class="comp-head">
-                  <span>Problem Solving</span>
-                  <span>76</span>
-                </div>
-
-                <div class="bar">
-                  <div class="bar-fill" style="width:76%"></div>
-                </div>
-              </div>
-
-            </div>
-
-
-            <div class="evidence">
-
-              <div class="evidence-box evidence-good">
-
-                <div class="evidence-title">
-                  ✓ Evidence Found
-                </div>
-
-                Internship experience,
-                campaign analysis,
-                Excel reporting.
-
-              </div>
-
-
-              <div class="evidence-box evidence-warn">
-
-                <div class="evidence-title">
-                  ⚠ Insufficient Evidence
-                </div>
-
-                No direct evidence of
-                leadership experience.
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- VALUE -->
-
-      <div class="section">
-
-        <div class="section-header">
-
-          <div class="section-kicker">
-            What HireLens does
-          </div>
-
-          <h2 id="valueTitle">
-            Better structure. Better evidence. Better decisions.
-          </h2>
-
-          <p id="valueDescription">
-            A recruitment workflow designed to make AI useful
-            without turning hiring into a black box.
-          </p>
-
-        </div>
-
-
-        <div class="value-grid">
-
-          <div class="value-card">
-            <div class="value-number">01</div>
-
-            <h3 id="value1Title">
-              Understand the Role
-            </h3>
-
-            <p id="value1Text">
-              Extract responsibilities, skills and competencies
-              from natural-language job descriptions.
-            </p>
-          </div>
-
-
-          <div class="value-card">
-            <div class="value-number">02</div>
-
-            <h3 id="value2Title">
-              Read the Evidence
-            </h3>
-
-            <p id="value2Text">
-              Evaluate candidates using information actually
-              supported by their resumes.
-            </p>
-          </div>
-
-
-          <div class="value-card">
-            <div class="value-number">03</div>
-
-            <h3 id="value3Title">
-              Structure the Interview
-            </h3>
-
-            <p id="value3Text">
-              Generate competency-focused STAR questions
-              based on the evidence and gaps.
-            </p>
-          </div>
-
-
-          <div class="value-card">
-            <div class="value-number">04</div>
-
-            <h3 id="value4Title">
-              Keep Humans in Control
-            </h3>
-
-            <p id="value4Text">
-              AI provides assessment references. Final hiring
-              decisions remain with human reviewers.
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-
-    <!-- WORKFLOW -->
-
-    <div class="workflow-section">
-
-      <div class="container">
-
-        <div class="workflow-header">
-
-          <div class="section-kicker">
-            How it works
-          </div>
-
-          <h2 id="workflowTitle">
-            From job description to structured interview.
-          </h2>
-
-          <p id="workflowDescription">
-            Every step turns unstructured hiring information
-            into something recruiters can understand and review.
-          </p>
-
-        </div>
-
-
-        <div class="workflow">
-
-          <div class="workflow-item">
-            <div class="number">01</div>
-            <h3 id="flow1">Define Job</h3>
-            <p>Understand the role and requirements.</p>
-          </div>
-
-          <div class="workflow-item">
-            <div class="number">02</div>
-            <h3 id="flow2">Map Competencies</h3>
-            <p>Translate requirements into measurable dimensions.</p>
-          </div>
-
-          <div class="workflow-item">
-            <div class="number">03</div>
-            <h3 id="flow3">Screen Evidence</h3>
-            <p>Find supporting evidence in resumes.</p>
-          </div>
-
-          <div class="workflow-item">
-            <div class="number">04</div>
-            <h3 id="flow4">Assess Talent</h3>
-            <p>Generate structured competency scores.</p>
-          </div>
-
-          <div class="workflow-item">
-            <div class="number">05</div>
-            <h3 id="flow5">Generate Interview</h3>
-            <p>Create evidence-based STAR questions.</p>
-          </div>
-
-          <div class="workflow-item">
-            <div class="number">06</div>
-            <h3 id="flow6">Human Review</h3>
-            <p>Keep the final decision with people.</p>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- ================= METHODOLOGY ================= -->
-
-  <section id="methodology" class="page">
-
-    <div class="container">
-
-      <div class="method-page">
-
-        <div class="method-hero">
-
-          <div class="section-kicker">
-            Project methodology
-          </div>
-
-          <h1 id="methodHeroTitle">
-            Evidence before judgment.
-          </h1>
-
-          <p id="methodHeroText">
-            HireLens AI is designed around one principle:
-            AI should organize evidence, not replace human judgment.
-          </p>
-
-        </div>
-
-
-        <div class="principle">
-
-          <strong id="principleTitle">
-            No evidence, no claim.
-          </strong>
-
-          <span id="principleText">
-            When a resume does not provide enough evidence,
-            the system should say “Insufficient Evidence”
-            rather than make a negative inference.
-          </span>
-
-        </div>
-
-
-        <div class="method-grid">
-
-          <div class="method-card">
-
-            <div class="method-num">01</div>
-
-            <div>
-              <h3 id="method1Title">Job Intelligence</h3>
-
-              <p id="method1Text">
-                Convert natural-language job descriptions into
-                structured role profiles, responsibilities,
-                must-have skills and preferred qualifications.
-              </p>
-            </div>
-
-          </div>
-
-
-          <div class="method-card">
-
-            <div class="method-num">02</div>
-
-            <div>
-              <h3 id="method2Title">Competency Mapping</h3>
-
-              <p id="method2Text">
-                Translate requirements into knowledge, skills,
-                abilities and experience, with explicit competency
-                dimensions and weights.
-              </p>
-            </div>
-
-          </div>
-
-
-          <div class="method-card">
-
-            <div class="method-num">03</div>
-
-            <div>
-              <h3 id="method3Title">Evidence-based Screening</h3>
-
-              <p id="method3Text">
-                Every assessment should be traceable to evidence
-                found in the candidate's resume. Unsupported claims
-                are not treated as facts.
-              </p>
-            </div>
-
-          </div>
-
-
-          <div class="method-card">
-
-            <div class="method-num">04</div>
-
-            <div>
-              <h3 id="method4Title">Structured Interview</h3>
-
-              <p id="method4Text">
-                Generate STAR behavioral questions that target
-                specific competencies and areas where evidence
-                remains limited.
-              </p>
-            </div>
-
-          </div>
-
-
-          <div class="method-card">
-
-            <div class="method-num">05</div>
-
-            <div>
-              <h3 id="method5Title">Human-in-the-loop</h3>
-
-              <p id="method5Text">
-                HireLens AI provides structured reference information.
-                It does not make hiring, rejection or ranking decisions.
-              </p>
-            </div>
-
-          </div>
-
-
-          <div class="method-card">
-
-            <div class="method-num">06</div>
-
-            <div>
-              <h3 id="method6Title">Bias Mitigation</h3>
-
-              <p id="method6Text">
-                The assessment framework is designed to avoid relying
-                on irrelevant personal attributes such as name, gender
-                or age.
-              </p>
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
+      <p class="small">
+        HireLens AI is identifying responsibilities,
+        requirements and competency signals.
+      </p>
 
     </div>
+  `;
 
-  </section>
 
+  try{
 
-  <!-- ================= DEMO ================= -->
+    const response =
+      await fetch("/api/analyze-role",{
 
-  <section id="demo" class="page">
+        method:"POST",
 
-    <div class="container">
+        headers:{
+          "Content-Type":"application/json"
+        },
 
-      <div class="demo-page">
+        body:JSON.stringify({
+          jobDescription:jobDescription
+        })
 
-        <div class="demo-header">
+      });
 
-          <div>
 
-            <div class="section-kicker">
-              AI hiring workspace
-            </div>
+    const data =
+      await response.json();
 
-            <h1 id="demoTitle">
-              Evaluate a candidate.
-            </h1>
 
-            <p id="demoDescription">
-              Start with a job description. HireLens will turn
-              the role into a structured competency profile.
-            </p>
+    if(!response.ok){
 
-          </div>
+      throw new Error(
+        data.error || "Something went wrong."
+      );
 
-          <div class="demo-badge" id="demoBadge">
-            DEMO MODE · AI CONNECTION NEXT
-          </div>
+    }
 
-        </div>
 
+    let profile;
 
-        <div class="workspace">
 
-          <!-- INPUT -->
+    try{
 
-          <div class="input-panel">
+      profile =
+        JSON.parse(data.result);
 
-            <div class="step-label">
-              Step 01
-            </div>
+    }catch{
 
-            <h2 class="panel-title" id="jobPanelTitle">
-              Define the role
-            </h2>
+      const cleaned =
+        data.result
+          .replace(/```json/g,"")
+          .replace(/```/g,"")
+          .trim();
 
-            <p class="panel-description" id="jobPanelDescription">
-              Paste the job description you want to analyze.
-            </p>
+      profile =
+        JSON.parse(cleaned);
 
-            <textarea
-              id="jobInput"
-              placeholder="Example: We are looking for a Product Marketing Intern..."
-            ></textarea>
+    }
 
-            <div class="input-actions">
 
-              <button
-                class="primary"
-                onclick="generateJobProfile()"
-                id="jobButton">
-                Analyze Role →
-              </button>
+    renderRoleProfile(profile);
 
-            </div>
 
-          </div>
+  }catch(error){
 
+    result.innerHTML = `
+      <div class="error">
 
-          <!-- RESULT -->
+        <strong>Analysis failed.</strong>
 
-          <div class="result-panel">
+        <br><br>
 
-            <div class="step-label">
-              AI output
-            </div>
+        ${escapeHtml(error.message)}
 
-            <div
-              class="result-empty"
-              id="emptyResult">
+        <br><br>
 
-              <div>
-
-                <div style="font-size:28px;margin-bottom:10px;">
-                  ◇
-                </div>
-
-                <strong style="display:block;color:#475467;margin-bottom:6px;">
-                  Your role profile will appear here
-                </strong>
-
-                Paste a job description and click
-                <b>Analyze Role</b> to begin.
-
-              </div>
-
-            </div>
-
-
-            <div
-              class="role-result"
-              id="roleResult">
-
-              <div class="result-heading">
-
-                <div>
-                  <div class="mini-label">
-                    Structured role profile
-                  </div>
-
-                  <h3 id="resultJobTitle">
-                    Product Marketing Intern
-                  </h3>
-
-                  <p>
-                    Generated from the provided job description
-                  </p>
-                </div>
-
-                <div class="role-tag">
-                  ROLE PROFILE
-                </div>
-
-              </div>
-
-
-              <div class="result-block">
-
-                <h4>
-                  Core responsibilities
-                </h4>
-
-                <div class="tag-list">
-                  <span class="tag">Market research</span>
-                  <span class="tag">Campaign support</span>
-                  <span class="tag">Data reporting</span>
-                </div>
-
-              </div>
-
-
-              <div class="result-block">
-
-                <h4>
-                  Must-have
-                </h4>
-
-                <div class="tag-list">
-                  <span class="tag">Communication</span>
-                  <span class="tag">Analytical skills</span>
-                  <span class="tag">Excel</span>
-                </div>
-
-              </div>
-
-
-              <div class="result-block">
-
-                <h4>
-                  Preferred
-                </h4>
-
-                <div class="tag-list">
-                  <span class="tag">Internship experience</span>
-                  <span class="tag">Marketing knowledge</span>
-                  <span class="tag">English proficiency</span>
-                </div>
-
-              </div>
-
-
-              <div class="result-block">
-
-                <h4>
-                  Competencies
-                </h4>
-
-                <div class="tag-list">
-                  <span class="tag">Analytical Ability · 25%</span>
-                  <span class="tag">Communication · 20%</span>
-                  <span class="tag">Problem Solving · 20%</span>
-                  <span class="tag">Marketing Knowledge · 25%</span>
-                  <span class="tag">Experience · 10%</span>
-                </div>
-
-              </div>
-
-
-              <div class="demo-warning">
-
-                ⚠ This is a prototype output.
-                In the next development stage, this section will
-                be generated dynamically by the AI model.
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <div class="demo-warning" style="margin-top:18px;">
-
-          <strong>Human-in-the-loop:</strong>
-
-          <span id="humanWarning">
-            HireLens AI does not make hiring or rejection decisions.
-            AI-generated assessments are reference information only.
-            Final hiring decisions must be made by qualified human reviewers.
-          </span>
-
-        </div>
+        Please check your Vercel deployment
+        and API configuration.
 
       </div>
+    `;
 
-    </div>
-
-  </section>
+  }
 
 
-  <!-- ================= FOOTER ================= -->
+  button.disabled = false;
 
-  <footer>
+  button.textContent = "Analyze Role";
 
-    <div class="footer-inner">
+}
+
+
+function renderRoleProfile(profile){
+
+  const result =
+    document.getElementById("resultPanel");
+
+
+  const responsibilities =
+    (profile.coreResponsibilities || [])
+      .map(item=>`<li>${escapeHtml(item)}</li>`)
+      .join("");
+
+
+  const mustHave =
+    (profile.mustHaveRequirements || [])
+      .map(item=>`<li>${escapeHtml(item)}</li>`)
+      .join("");
+
+
+  const preferred =
+    (profile.preferredRequirements || [])
+      .map(item=>`<li>${escapeHtml(item)}</li>`)
+      .join("");
+
+
+  const competencies =
+    (profile.competencies || [])
+      .map(comp=>`
+
+        <div class="competency">
+
+          <div class="comp-top">
+
+            <strong>
+              ${escapeHtml(comp.name || "Competency")}
+            </strong>
+
+            <span class="weight">
+              ${Number(comp.weight || 0)}%
+            </span>
+
+          </div>
+
+          <div class="small">
+            ${escapeHtml(comp.reason || "")}
+          </div>
+
+        </div>
+
+      `)
+      .join("");
+
+
+  const signals =
+    (profile.evidenceSignals || [])
+      .map(item=>`<li>${escapeHtml(item)}</li>`)
+      .join("");
+
+
+  const insufficient =
+    (profile.insufficientEvidenceAreas || [])
+      .map(item=>`<li>${escapeHtml(item)}</li>`)
+      .join("");
+
+
+  result.innerHTML = `
+
+    <div class="role-header">
 
       <div>
-        © 2026 HireLens AI
+
+        <div class="small">
+          JOB INTELLIGENCE
+        </div>
+
+        <h2>
+          ${escapeHtml(profile.roleTitle || "Analyzed Role")}
+        </h2>
+
       </div>
 
-      <div id="footerText">
-        Evidence-based recruitment · Human-in-the-loop decision making
+      <div class="badge">
+        AI Reference
       </div>
 
     </div>
 
-  </footer>
 
+    <div class="result-section">
 
-  <!-- ================= JAVASCRIPT ================= -->
+      <h4>Role Summary</h4>
 
-  <script>
+      <p>
+        ${escapeHtml(profile.roleSummary || "No summary available.")}
+      </p>
 
-    let currentLanguage = "en";
+    </div>
 
 
-    /* ---------- PAGE SWITCH ---------- */
+    <div class="result-section">
 
-    function showPage(pageId) {
+      <h4>Core Responsibilities</h4>
 
-      const pages = document.querySelectorAll(".page");
+      <ul>
+        ${responsibilities || "<li>Insufficient Evidence</li>"}
+      </ul>
 
-      pages.forEach(function(page) {
-        page.classList.remove("active");
-      });
+    </div>
 
-      const target = document.getElementById(pageId);
 
-      if (target) {
-        target.classList.add("active");
-      }
+    <div class="result-section">
 
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth"
-      });
-    }
+      <h4>Must-have Requirements</h4>
 
+      <ul>
+        ${mustHave || "<li>Insufficient Evidence</li>"}
+      </ul>
 
-    /* ---------- DEMO ---------- */
+    </div>
 
-    function generateJobProfile() {
 
-      const input =
-        document.getElementById("jobInput").value.trim();
+    <div class="result-section">
 
-      const emptyResult =
-        document.getElementById("emptyResult");
+      <h4>Preferred Requirements</h4>
 
-      const roleResult =
-        document.getElementById("roleResult");
+      <ul>
+        ${preferred || "<li>Insufficient Evidence</li>"}
+      </ul>
 
-      const button =
-        document.getElementById("jobButton");
+    </div>
 
 
-      if (!input) {
+    <div class="result-section">
 
-        emptyResult.innerHTML = `
-          <div>
-            <div style="font-size:28px;margin-bottom:10px;">!</div>
-            <strong style="display:block;color:#b45309;margin-bottom:6px;">
-              Please add a job description.
-            </strong>
-            Paste the role requirements into the box on the left.
-          </div>
-        `;
+      <h4>Competency Map</h4>
 
-        return;
-      }
+      ${competencies || "<p>Insufficient Evidence</p>"}
 
+    </div>
 
-      button.textContent =
-        currentLanguage === "en"
-          ? "Analyzing..."
-          : "分析中...";
 
-      button.disabled = true;
+    <div class="result-section">
 
+      <h4>Evidence Signals</h4>
 
-      setTimeout(function() {
+      <ul>
+        ${signals || "<li>Insufficient Evidence</li>"}
+      </ul>
 
-        emptyResult.style.display = "none";
+    </div>
 
-        roleResult.classList.add("active");
 
-        button.textContent =
-          currentLanguage === "en"
-            ? "Role Analyzed ✓"
-            : "职位分析完成 ✓";
+    <div class="result-section">
 
-        button.disabled = false;
+      <h4>Areas Requiring Further Evidence</h4>
 
-      }, 900);
+      <ul>
+        ${insufficient || "<li>None identified.</li>"}
+      </ul>
 
-    }
+    </div>
 
+  `;
 
-    /* ---------- LANGUAGE ---------- */
+}
 
-    function toggleLanguage() {
 
-      if (currentLanguage === "en") {
+function escapeHtml(value){
 
-        currentLanguage = "zh";
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 
-        document.documentElement.lang = "zh-CN";
+}
 
-        document.getElementById("languageButton").textContent = "EN";
-
-        document.getElementById("navHome").textContent = "产品";
-        document.getElementById("navMethod").textContent = "方法论";
-        document.getElementById("navDemo").textContent = "演示";
-        document.getElementById("launchButton").textContent = "开始体验 →";
-
-        document.getElementById("heroLead").textContent =
-          "让招聘决策从简历信息中获得真正有价值的证据。";
-
-        document.getElementById("heroCopy").textContent =
-          "HireLens AI 帮助招聘人员理解岗位要求、评估候选人证据并生成结构化面试问题，同时始终保留人的最终决策权。";
-
-        document.getElementById("heroPrimary").textContent =
-          "体验 HireLens →";
-
-        document.getElementById("heroSecondary").textContent =
-          "了解工作原理";
-
-        document.getElementById("valueTitle").textContent =
-          "更好的结构，更清晰的证据，更可靠的决策。";
-
-        document.getElementById("valueDescription").textContent =
-          "让 AI 真正辅助招聘，而不是把招聘变成一个无法解释的黑箱。";
-
-        document.getElementById("value1Title").textContent =
-          "理解岗位";
-
-        document.getElementById("value1Text").textContent =
-          "从自然语言职位描述中提取职责、技能和核心能力要求。";
-
-        document.getElementById("value2Title").textContent =
-          "寻找证据";
-
-        document.getElementById("value2Text").textContent =
-          "只使用候选人简历中真正存在的信息进行评估。";
-
-        document.getElementById("value3Title").textContent =
-          "结构化面试";
-
-        document.getElementById("value3Text").textContent =
-          "围绕能力要求和证据缺口生成 STAR 行为面试问题。";
-
-        document.getElementById("value4Title").textContent =
-          "人在回路";
-
-        document.getElementById("value4Text").textContent =
-          "AI 只提供评估参考，最终招聘决策始终由人工完成。";
-
-        document.getElementById("workflowTitle").textContent =
-          "从职位描述，到结构化面试。";
-
-        document.getElementById("workflowDescription").textContent =
-          "每一步都将复杂、非结构化的招聘信息转化为招聘人员可以理解和审核的内容。";
-
-        document.getElementById("flow1").textContent =
-          "定义职位";
-
-        document.getElementById("flow2").textContent =
-          "能力映射";
-
-        document.getElementById("flow3").textContent =
-          "证据筛选";
-
-        document.getElementById("flow4").textContent =
-          "人才评估";
-
-        document.getElementById("flow5").textContent =
-          "生成面试";
-
-        document.getElementById("flow6").textContent =
-          "人工审核";
-
-        document.getElementById("methodHeroTitle").textContent =
-          "让证据先于判断。";
-
-        document.getElementById("methodHeroText").textContent =
-          "HireLens AI 的核心原则是：AI 应该帮助人整理和理解证据，而不是替代人的判断。";
-
-        document.getElementById("principleTitle").textContent =
-          "没有证据，就不做结论。";
-
-        document.getElementById("principleText").textContent =
-          "当简历无法提供足够证据时，系统应该显示“证据不足”，而不是进行负面推断。";
-
-        document.getElementById("method1Title").textContent =
-          "职位智能分析";
-
-        document.getElementById("method1Text").textContent =
-          "将自然语言职位描述转换为结构化职位画像，提取岗位职责、必须条件和优先条件。";
-
-        document.getElementById("method2Title").textContent =
-          "能力映射";
-
-        document.getElementById("method2Text").textContent =
-          "将岗位要求转化为知识、技能、能力和经验，并设置明确的能力维度和权重。";
-
-        document.getElementById("method3Title").textContent =
-          "基于证据的筛选";
-
-        document.getElementById("method3Text").textContent =
-          "每项评估都应该能够追溯到候选人简历中的真实证据，不把未经支持的信息当作事实。";
-
-        document.getElementById("method4Title").textContent =
-          "结构化面试";
-
-        document.getElementById("method4Text").textContent =
-          "围绕具体能力以及证据不足的领域，生成 STAR 行为面试问题。";
-
-        document.getElementById("method5Title").textContent =
-          "人在回路";
-
-        document.getElementById("method5Text").textContent =
-          "HireLens AI 只提供结构化评估参考，不做录用、淘汰或排名决定。";
-
-        document.getElementById("method6Title").textContent =
-          "偏差控制";
-
-        document.getElementById("method6Text").textContent =
-          "评估框架尽量避免依赖姓名、性别、年龄等与岗位能力无关的个人属性。";
-
-        document.getElementById("demoTitle").textContent =
-          "评估一名候选人。";
-
-        document.getElementById("demoDescription").textContent =
-          "从职位描述开始，HireLens AI 会将岗位要求转换成结构化能力画像。";
-
-        document.getElementById("jobPanelTitle").textContent =
-          "定义职位";
-
-        document.getElementById("jobPanelDescription").textContent =
-          "粘贴你希望分析的职位描述。";
-
-        document.getElementById("jobInput").placeholder =
-          "例如：我们正在寻找一名产品市场实习生……";
-
-        document.getElementById("jobButton").textContent =
-          "分析职位 →";
-
-        document.getElementById("humanWarning").textContent =
-          "HireLens AI 不做录用或淘汰决定。AI 生成的评估内容仅供参考，最终招聘决策必须由经过培训的人工 HR 审核。";
-
-        document.getElementById("footerText").textContent =
-          "基于证据的招聘 · 人在回路的人机协同决策";
-
-      } else {
-
-        location.reload();
-
-      }
-
-    }
-
-  </script>
+</script>
 
 </body>
 </html>
