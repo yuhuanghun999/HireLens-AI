@@ -1,76 +1,179 @@
 export default async function handler(req, res) {
-
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
-  try {
+  const {
+    jd = "",
+    resume = "",
+    roleProfile = null,
+    candidateProfile = null,
+    inputLanguage = "auto",
+    outputLanguage = "auto"
+  } = req.body || {};
 
-    const {
-      jobDescription,
-      roleProfile,
-      candidateProfile,
-      resume,
-      language = "en"
-    } = req.body || {};
+  /*
+   * The current V4 frontend primarily sends:
+   * roleProfile + candidateProfile.
+   *
+   * JD and resume are optional here because the previous
+   * two AI steps have already transformed the relevant
+   * information into structured evidence.
+   */
 
-    if (
-      !jobDescription ||
-      !roleProfile ||
-      !candidateProfile ||
-      !resume
-    ) {
-      return res.status(400).json({
-        error:
-          "Job description, role profile, candidate profile and resume are required."
-      });
-    }
+  if (!candidateProfile) {
+    return res.status(400).json({
+      error: "Candidate assessment is required."
+    });
+  }
 
-    if (jobDescription.length > 20000) {
-      return res.status(400).json({
-        error: "Job description is too long."
-      });
-    }
+  const key = process.env.DEEPSEEK_API_KEY;
 
-    if (resume.length > 30000) {
-      return res.status(400).json({
-        error: "Resume is too long."
-      });
-    }
+  if (!key) {
+    return res.status(500).json({
+      error: "DEEPSEEK_API_KEY is not configured."
+    });
+  }
 
-    const outputLanguage =
-      language === "zh"
-        ? "Simplified Chinese"
-        : "English";
+  /*
+   * Determine output language.
+   */
 
-    const systemPrompt = `
-You are HireLens AI, an evidence-based structured interview assistant.
+  let outputInstruction = "";
 
-Your task is to generate structured interview questions based on:
-1. The job description.
-2. The structured role profile.
-3. The candidate assessment.
-4. Evidence gaps that need verification.
+  if (outputLanguage === "zh") {
+    outputInstruction = `
+Write ALL user-facing textual fields in Simplified Chinese.
+Do not output English explanations.
+`;
+  } else if (outputLanguage === "en") {
+    outputInstruction = `
+Write ALL user-facing textual fields in English.
+Do not output Chinese explanations.
+`;
+  } else {
+    outputInstruction = `
+Automatically determine the dominant language from the
+role profile and candidate assessment.
 
-Output language:
-${outputLanguage}
+If they are primarily Chinese,
+write ALL user-facing textual fields in Simplified Chinese.
+
+If they are primarily English,
+write ALL user-facing textual fields in English.
+
+If the content is mixed,
+use the dominant language.
+`;
+  }
+
+  const inputInstruction =
+    inputLanguage === "zh"
+      ? "The source information is primarily Chinese."
+      : inputLanguage === "en"
+        ? "The source information is primarily English."
+        : "The source information may be Chinese, English, or mixed-language.";
+
+  /*
+   * Convert structured objects into readable JSON.
+   */
+
+  const roleText = roleProfile
+    ? JSON.stringify(roleProfile, null, 2)
+    : "No role profile is available.";
+
+  const candidateText = JSON.stringify(
+    candidateProfile,
+    null,
+    2
+  );
+
+  /*
+   * Optional raw JD / resume.
+   *
+   * These are included only if the frontend provides them.
+   * This gives the backend additional context without
+   * making them mandatory.
+   */
+
+  const jdText =
+    jd && typeof jd === "string"
+      ? jd.slice(0, 20000)
+      : "Not provided.";
+
+  const resumeText =
+    resume && typeof resume === "string"
+      ? resume.slice(0, 20000)
+      : "Not provided.";
+
+  const prompt = `
+You are an evidence-based interview design assistant.
+
+Your task is to generate structured interview questions
+for a recruiter based on the role requirements and the
+candidate's evidence gaps.
+
+${inputInstruction}
+
+${outputInstruction}
 
 IMPORTANT RULES:
 
-1. Generate 5 to 7 questions.
-2. Questions must be directly related to job competencies.
-3. Prioritize evidence gaps and verification areas.
-4. Use behavioral / STAR-style questions where appropriate.
-5. Do not ask about age, gender, ethnicity, religion, disability, family status, pregnancy, marital status or other protected characteristics.
-6. Do not make a hiring recommendation.
-7. Do not repeat unsupported assumptions about the candidate.
-8. Questions should allow the interviewer to collect observable evidence.
-9. "listenFor" should describe evidence the interviewer should listen for.
-10. You MUST return valid JSON only.
+1. Generate 5 to 7 interview questions.
 
-Return exactly this structure:
+2. Questions should focus primarily on:
+   - evidence gaps
+   - verification areas
+   - important competencies
+   - claims that need clarification
+   - job-relevant experience
+
+3. Prefer STAR-style questions.
+
+4. Questions should encourage the candidate to describe:
+   Situation,
+   Task,
+   Action,
+   Result.
+
+5. Do not ask discriminatory questions.
+
+6. Never ask about:
+   - age
+   - gender
+   - ethnicity
+   - religion
+   - disability
+   - health
+   - pregnancy
+   - marital status
+   - family plans
+   - sexual orientation
+   - other protected characteristics
+
+7. Do not make a hiring recommendation.
+
+8. Do not label the candidate as hire/reject.
+
+9. Every question must have a clear competency.
+
+10. Explain why the question is useful.
+
+11. Identify the evidence gap being investigated.
+
+12. Provide practical "listen for" guidance
+    so a human interviewer knows what evidence to look for.
+
+13. Do not invent facts about the candidate.
+
+14. If evidence is unavailable, treat it as something
+    to verify rather than assuming it is negative.
+
+15. Return valid JSON only.
+
+Use exactly this structure:
 
 {
   "questions": [
@@ -83,32 +186,25 @@ Return exactly this structure:
     }
   ]
 }
-`;
-
-    const userPrompt = `
-JOB DESCRIPTION:
-
-${jobDescription}
 
 ROLE PROFILE:
 
-${JSON.stringify(roleProfile, null, 2)}
+${roleText}
 
 CANDIDATE ASSESSMENT:
 
-${JSON.stringify(candidateProfile, null, 2)}
+${candidateText}
 
-CANDIDATE RESUME:
+JOB DESCRIPTION:
 
-${resume}
+${jdText}
 
-Generate 5 to 7 structured interview questions.
+RESUME:
 
-Prioritize areas where evidence is incomplete or needs verification.
-
-Return JSON only.
+${resumeText}
 `;
 
+  try {
     const response = await fetch(
       "https://api.deepseek.com/chat/completions",
       {
@@ -116,22 +212,34 @@ Return JSON only.
 
         headers: {
           "Content-Type": "application/json",
-          "Authorization":
-            `Bearer ${process.env.DEEPSEEK_API_KEY}`
+          "Authorization": `Bearer ${key}`
         },
 
         body: JSON.stringify({
-
           model: "deepseek-flash",
 
           messages: [
             {
               role: "system",
-              content: systemPrompt
+              content: `
+You are a professional evidence-based interview design assistant.
+
+Always return valid JSON.
+
+Generate practical, non-discriminatory,
+job-relevant interview questions.
+
+Focus on evidence gaps rather than assumptions.
+
+Never make hiring decisions.
+
+Follow the requested output language exactly.
+`
             },
+
             {
               role: "user",
-              content: userPrompt
+              content: prompt
             }
           ],
 
@@ -139,49 +247,74 @@ Return JSON only.
             type: "json_object"
           },
 
-          max_tokens: 6000,
+          stream: false,
 
-          stream: false
-
+          max_tokens: 2600
         })
       }
     );
 
+    const data = await response.json();
+
     if (!response.ok) {
-
-      const errorText =
-        await response.text();
-
       return res.status(response.status).json({
-        error: errorText
+        error:
+          data?.error?.message ||
+          "DeepSeek request failed."
       });
-
     }
 
-    const data =
-      await response.json();
+    const content =
+      data?.choices?.[0]?.message?.content;
 
-    const result =
-      data.choices?.[0]?.message?.content;
+    if (!content) {
+      return res.status(500).json({
+        error: "DeepSeek returned an empty response."
+      });
+    }
 
-    if (!result) {
+    let result;
+
+    try {
+      result = JSON.parse(content);
+    } catch (parseError) {
+      console.error(
+        "Interview JSON parse error:",
+        parseError
+      );
 
       return res.status(500).json({
-        error: "No result returned from DeepSeek."
+        error: "The AI returned invalid JSON."
       });
-
     }
 
-    return res.status(200).json({
-      result
-    });
+    /*
+     * Basic validation.
+     */
+
+    if (
+      !result.questions ||
+      !Array.isArray(result.questions)
+    ) {
+      return res.status(500).json({
+        error:
+          "The AI response does not contain valid interview questions."
+      });
+    }
+
+    return res.status(200).json(result);
 
   } catch (error) {
+    console.error(
+      "Generate interview error:",
+      error
+    );
 
     return res.status(500).json({
-      error: error.message
+      error:
+        "Unable to generate interview questions.",
+      detail:
+        error.message
     });
-
   }
-
 }
