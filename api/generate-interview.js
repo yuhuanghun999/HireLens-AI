@@ -14,15 +14,6 @@ export default async function handler(req, res) {
     outputLanguage = "auto"
   } = req.body || {};
 
-  /*
-   * The current V4 frontend primarily sends:
-   * roleProfile + candidateProfile.
-   *
-   * JD and resume are optional here because the previous
-   * two AI steps have already transformed the relevant
-   * information into structured evidence.
-   */
-
   if (!candidateProfile) {
     return res.status(400).json({
       error: "Candidate assessment is required."
@@ -37,143 +28,91 @@ export default async function handler(req, res) {
     });
   }
 
-  /*
-   * Determine output language.
-   */
-
-  let outputInstruction = "";
+  let languageInstruction = "";
 
   if (outputLanguage === "zh") {
-    outputInstruction = `
-Write ALL user-facing textual fields in Simplified Chinese.
-Do not output English explanations.
+    languageInstruction = `
+ALL textual output must be written in Simplified Chinese.
 `;
   } else if (outputLanguage === "en") {
-    outputInstruction = `
-Write ALL user-facing textual fields in English.
-Do not output Chinese explanations.
+    languageInstruction = `
+ALL textual output must be written in English.
 `;
   } else {
-    outputInstruction = `
-Automatically determine the dominant language from the
-role profile and candidate assessment.
-
-If they are primarily Chinese,
-write ALL user-facing textual fields in Simplified Chinese.
-
-If they are primarily English,
-write ALL user-facing textual fields in English.
-
-If the content is mixed,
-use the dominant language.
+    languageInstruction = `
+Detect the dominant language of the role and candidate information.
+If primarily Chinese, output Simplified Chinese.
+If primarily English, output English.
 `;
   }
 
-  const inputInstruction =
-    inputLanguage === "zh"
-      ? "The source information is primarily Chinese."
-      : inputLanguage === "en"
-        ? "The source information is primarily English."
-        : "The source information may be Chinese, English, or mixed-language.";
-
-  /*
-   * Convert structured objects into readable JSON.
-   */
-
   const roleText = roleProfile
-    ? JSON.stringify(roleProfile, null, 2)
+    ? JSON.stringify(roleProfile)
     : "No role profile is available.";
 
-  const candidateText = JSON.stringify(
-    candidateProfile,
-    null,
-    2
-  );
-
-  /*
-   * Optional raw JD / resume.
-   *
-   * These are included only if the frontend provides them.
-   * This gives the backend additional context without
-   * making them mandatory.
-   */
+  const candidateText =
+    JSON.stringify(candidateProfile);
 
   const jdText =
-    jd && typeof jd === "string"
-      ? jd.slice(0, 20000)
-      : "Not provided.";
+    typeof jd === "string"
+      ? jd.substring(0, 20000)
+      : "";
 
   const resumeText =
-    resume && typeof resume === "string"
-      ? resume.slice(0, 20000)
-      : "Not provided.";
+    typeof resume === "string"
+      ? resume.substring(0, 20000)
+      : "";
 
   const prompt = `
+Generate structured interview questions based on the
+candidate assessment and evidence gaps.
+
+${languageInstruction}
+
 You are an evidence-based interview design assistant.
 
-Your task is to generate structured interview questions
-for a recruiter based on the role requirements and the
-candidate's evidence gaps.
+Generate 5 to 7 practical interview questions.
 
-${inputInstruction}
+Focus primarily on:
 
-${outputInstruction}
+- evidence gaps
+- verification areas
+- important competencies
+- unclear claims
+- job-relevant experience
 
-IMPORTANT RULES:
+Prefer STAR-style questions.
 
-1. Generate 5 to 7 interview questions.
+Questions should encourage the candidate to explain:
 
-2. Questions should focus primarily on:
-   - evidence gaps
-   - verification areas
-   - important competencies
-   - claims that need clarification
-   - job-relevant experience
+Situation
+Task
+Action
+Result
 
-3. Prefer STAR-style questions.
+Do not ask about:
 
-4. Questions should encourage the candidate to describe:
-   Situation,
-   Task,
-   Action,
-   Result.
+- age
+- gender
+- ethnicity
+- religion
+- disability
+- health
+- pregnancy
+- marital status
+- family plans
+- sexual orientation
+- other protected characteristics
 
-5. Do not ask discriminatory questions.
+Do not make a hiring recommendation.
 
-6. Never ask about:
-   - age
-   - gender
-   - ethnicity
-   - religion
-   - disability
-   - health
-   - pregnancy
-   - marital status
-   - family plans
-   - sexual orientation
-   - other protected characteristics
+Do not label the candidate as hire or reject.
 
-7. Do not make a hiring recommendation.
+Do not invent candidate information.
 
-8. Do not label the candidate as hire/reject.
+Return JSON only.
 
-9. Every question must have a clear competency.
-
-10. Explain why the question is useful.
-
-11. Identify the evidence gap being investigated.
-
-12. Provide practical "listen for" guidance
-    so a human interviewer knows what evidence to look for.
-
-13. Do not invent facts about the candidate.
-
-14. If evidence is unavailable, treat it as something
-    to verify rather than assuming it is negative.
-
-15. Return valid JSON only.
-
-Use exactly this structure:
+Use EXACTLY this structure:
 
 {
   "questions": [
@@ -222,21 +161,20 @@ ${resumeText}
             {
               role: "system",
               content: `
-You are a professional evidence-based interview design assistant.
+You are an evidence-based interview design assistant.
 
-Always return valid JSON.
+You MUST return valid JSON.
 
-Generate practical, non-discriminatory,
+Do not output Markdown.
+
+Do not output explanations outside the JSON object.
+
+Generate non-discriminatory,
 job-relevant interview questions.
 
-Focus on evidence gaps rather than assumptions.
-
-Never make hiring decisions.
-
-Follow the requested output language exactly.
+Follow the requested output language.
 `
             },
-
             {
               role: "user",
               content: prompt
@@ -249,12 +187,22 @@ Follow the requested output language exactly.
 
           stream: false,
 
-          max_tokens: 2600
+          max_tokens: 8000
         })
       }
     );
 
     const data = await response.json();
+
+    console.log(
+      "DeepSeek status:",
+      response.status
+    );
+
+    console.log(
+      "DeepSeek finish reason:",
+      data?.choices?.[0]?.finish_reason
+    );
 
     if (!response.ok) {
       return res.status(response.status).json({
@@ -264,12 +212,34 @@ Follow the requested output language exactly.
       });
     }
 
-    const content =
-      data?.choices?.[0]?.message?.content;
+    const choice = data?.choices?.[0];
 
-    if (!content) {
+    if (!choice) {
       return res.status(500).json({
-        error: "DeepSeek returned an empty response."
+        error: "DeepSeek returned no choices.",
+        details: data
+      });
+    }
+
+    const content =
+      choice?.message?.content;
+
+    const finishReason =
+      choice?.finish_reason;
+
+    if (finishReason === "length") {
+      return res.status(500).json({
+        error:
+          "DeepSeek output was truncated.",
+        finishReason
+      });
+    }
+
+    if (!content || !content.trim()) {
+      return res.status(500).json({
+        error:
+          "DeepSeek returned empty content.",
+        finishReason
       });
     }
 
@@ -277,36 +247,37 @@ Follow the requested output language exactly.
 
     try {
       result = JSON.parse(content);
-    } catch (parseError) {
+    } catch (error) {
+
       console.error(
-        "Interview JSON parse error:",
-        parseError
+        "Invalid interview JSON:",
+        content
       );
 
       return res.status(500).json({
-        error: "The AI returned invalid JSON."
+        error:
+          "DeepSeek returned invalid JSON.",
+        finishReason,
+        raw:
+          content.substring(0, 3000)
       });
     }
 
-    /*
-     * Basic validation.
-     */
-
     if (
-      !result.questions ||
       !Array.isArray(result.questions)
     ) {
       return res.status(500).json({
         error:
-          "The AI response does not contain valid interview questions."
+          "DeepSeek returned no valid interview questions."
       });
     }
 
     return res.status(200).json(result);
 
   } catch (error) {
+
     console.error(
-      "Generate interview error:",
+      "Interview generation error:",
       error
     );
 
