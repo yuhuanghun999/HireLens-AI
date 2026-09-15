@@ -39,117 +39,61 @@ export default async function handler(req, res) {
     });
   }
 
-  /*
-   * Output language
-   */
-
-  let outputInstruction = "";
+  let languageInstruction = "";
 
   if (outputLanguage === "zh") {
-    outputInstruction = `
-Write ALL user-facing textual fields in Simplified Chinese.
-Do not output English explanations.
+    languageInstruction = `
+ALL textual output must be written in Simplified Chinese.
 `;
   } else if (outputLanguage === "en") {
-    outputInstruction = `
-Write ALL user-facing textual fields in English.
-Do not output Chinese explanations.
+    languageInstruction = `
+ALL textual output must be written in English.
 `;
   } else {
-    outputInstruction = `
-Automatically detect the dominant language of the input.
-
-If the input is primarily Chinese,
-write ALL user-facing textual fields in Simplified Chinese.
-
-If the input is primarily English,
-write ALL user-facing textual fields in English.
-
-If the input contains both Chinese and English,
-use the dominant language unless another output language is explicitly requested.
+    languageInstruction = `
+Detect the dominant language of the input.
+If primarily Chinese, output Simplified Chinese.
+If primarily English, output English.
 `;
   }
 
-  /*
-   * Input language
-   */
-
-  const inputInstruction =
-    inputLanguage === "zh"
-      ? "The user indicates that the input is primarily Chinese."
-      : inputLanguage === "en"
-        ? "The user indicates that the input is primarily English."
-        : "The input may be Chinese, English, or mixed-language. Automatically understand the language.";
-
-  /*
-   * Existing role profile
-   */
-
   const roleText = roleProfile
     ? JSON.stringify(roleProfile)
-    : "No previously analyzed role profile is available.";
+    : "No pre-analyzed role profile is available.";
 
   const prompt = `
-You are an evidence-based candidate assessment assistant.
+Assess the candidate against the job description.
 
-Your task is to assess a candidate against a job description.
+${languageInstruction}
 
-${inputInstruction}
+You are an evidence-based recruitment assessment assistant.
 
-${outputInstruction}
+Use ONLY evidence supported by the job description and resume.
 
-IMPORTANT RULES:
+Do not invent experience, skills, qualifications, or achievements.
 
-1. Assess ONLY job-relevant evidence.
+Do not infer:
 
-2. Compare the candidate's resume against the actual requirements
-   contained in the job description.
+- age
+- gender
+- ethnicity
+- nationality
+- religion
+- disability
+- health status
+- sexual orientation
+- family status
+- pregnancy
+- other protected characteristics
 
-3. Do not invent experience, skills, education, achievements,
-   responsibilities, or qualifications.
+Do not make a hiring or rejection recommendation.
 
-4. Do not infer information that is not explicitly supported.
+If evidence is missing, identify it as an evidence gap.
+Do not treat missing evidence as automatically negative.
 
-5. Do NOT use or infer:
-   - gender
-   - age
-   - ethnicity
-   - nationality
-   - religion
-   - disability
-   - health status
-   - sexual orientation
-   - family status
-   - pregnancy
-   - other protected characteristics
+Return JSON only.
 
-6. Do not make a final hiring recommendation.
-
-7. Do not say:
-   - Hire
-   - Reject
-   - Strong hire
-   - Strong reject
-
-8. If evidence is missing, say "Insufficient Evidence"
-   in the requested output language.
-
-9. Missing evidence must NOT automatically be treated as negative evidence.
-
-10. Scores should reflect job-relevant evidence only.
-
-11. Overall score must be an integer from 0 to 100.
-
-12. Competency weights must be whole-number percentages.
-
-13. Competency weights should add up to exactly 100.
-
-14. Evidence must be specific and traceable to the resume
-    or job description.
-
-15. Return valid JSON only.
-
-Use exactly this structure:
+Use EXACTLY this structure:
 
 {
   "candidateName": "",
@@ -168,6 +112,16 @@ Use exactly this structure:
   "evidenceGaps": [],
   "verificationAreas": []
 }
+
+Rules:
+
+- overallScore must be an integer from 0 to 100.
+- dimension score must be from 0 to 100.
+- dimension weights must be integers.
+- dimension weights must add up to exactly 100.
+- Scores must reflect job-relevant evidence only.
+- Keep evidence specific.
+- Do not make a final hiring decision.
 
 ROLE PROFILE:
 
@@ -200,9 +154,13 @@ ${resume}
             {
               role: "system",
               content: `
-You are a professional evidence-based recruitment assessment assistant.
+You are an evidence-based candidate assessment assistant.
 
-Always return valid JSON.
+You MUST return valid JSON.
+
+Do not output Markdown.
+
+Do not output explanations outside the JSON object.
 
 Use only job-relevant evidence.
 
@@ -210,12 +168,9 @@ Never infer protected characteristics.
 
 Never make a hiring or rejection decision.
 
-When evidence is missing, explicitly identify the evidence gap.
-
-Follow the requested output language exactly.
+Follow the requested output language.
 `
             },
-
             {
               role: "user",
               content: prompt
@@ -228,12 +183,22 @@ Follow the requested output language exactly.
 
           stream: false,
 
-          max_tokens: 2800
+          max_tokens: 8000
         })
       }
     );
 
     const data = await response.json();
+
+    console.log(
+      "DeepSeek status:",
+      response.status
+    );
+
+    console.log(
+      "DeepSeek finish reason:",
+      data?.choices?.[0]?.finish_reason
+    );
 
     if (!response.ok) {
       return res.status(response.status).json({
@@ -243,12 +208,34 @@ Follow the requested output language exactly.
       });
     }
 
-    const content =
-      data?.choices?.[0]?.message?.content;
+    const choice = data?.choices?.[0];
 
-    if (!content) {
+    if (!choice) {
       return res.status(500).json({
-        error: "DeepSeek returned an empty response."
+        error: "DeepSeek returned no choices.",
+        details: data
+      });
+    }
+
+    const content =
+      choice?.message?.content;
+
+    const finishReason =
+      choice?.finish_reason;
+
+    if (finishReason === "length") {
+      return res.status(500).json({
+        error:
+          "DeepSeek output was truncated.",
+        finishReason
+      });
+    }
+
+    if (!content || !content.trim()) {
+      return res.status(500).json({
+        error:
+          "DeepSeek returned empty content.",
+        finishReason
       });
     }
 
@@ -256,28 +243,60 @@ Follow the requested output language exactly.
 
     try {
       result = JSON.parse(content);
-    } catch (parseError) {
+    } catch (error) {
+
       console.error(
-        "Candidate JSON parse error:",
-        parseError
+        "Invalid candidate JSON:",
+        content
       );
 
       return res.status(500).json({
-        error: "The AI returned invalid JSON."
+        error:
+          "DeepSeek returned invalid JSON.",
+        finishReason,
+        raw:
+          content.substring(0, 3000)
       });
+    }
+
+    if (
+      !Array.isArray(result.dimensions)
+    ) {
+      result.dimensions = [];
+    }
+
+    if (
+      !Array.isArray(result.strengths)
+    ) {
+      result.strengths = [];
+    }
+
+    if (
+      !Array.isArray(result.evidenceGaps)
+    ) {
+      result.evidenceGaps = [];
+    }
+
+    if (
+      !Array.isArray(result.verificationAreas)
+    ) {
+      result.verificationAreas = [];
     }
 
     return res.status(200).json(result);
 
   } catch (error) {
+
     console.error(
-      "Analyze candidate error:",
+      "Candidate assessment error:",
       error
     );
 
     return res.status(500).json({
-      error: "Unable to assess the candidate.",
-      detail: error.message
+      error:
+        "Unable to assess the candidate.",
+      detail:
+        error.message
     });
   }
 }
